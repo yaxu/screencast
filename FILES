@@ -1,0 +1,18 @@
+castavi.sh - records screencast, with audio from jack, to an uncompressed 
+             avi file
+screensave - records screencast with audio from jack, and webcam to another 
+             file, both uncompressed
+screencast - a wacky thing sending screencast with alsa audio to an icecast
+             server, taking various OSC messages to write text to different
+             parts of the screen.  What I used for this:
+                http://www.archive.org/details/yaxu2008-12-13.sofa-coding
+tailosc.pl - sends contents of a file to screencast above, to go in the
+             subtitles area. I used this with irc log file to put chat
+             messages in the stream
+quad.sh    - mixes four videos into a split screen webm
+Makefile   - makefile for screensave and screencast
+
+All rely on various bits of gstreamer, castavi.sh needs gst-launch and
+the others need libgstreamer0.10-dev or similar, plus install all the 
+plugins for luck.  Also liblo-dev
+

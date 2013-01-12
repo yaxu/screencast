@@ -138,7 +138,7 @@ main (gint   argc,
 				     NULL), NULL);
   g_object_set (G_OBJECT (shout),
 		"ip", "94.228.66.94",
-		"password", "feltchy",
+		"password", "xxx",
 		"mount", "/placard.ogg",
 		NULL);
   g_object_set (G_OBJECT (audioenc),

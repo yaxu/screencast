@@ -1,11 +1,36 @@
 
 #include <string.h> /* for memset () */
 #include <gst/gst.h>
+#include <gst/audio/multichannel.h>
+#include <gst/audio/audio-enumtypes.h>
 #include "lo/lo.h"
 #include <stdio.h>
 
+#define CHANNELS 8
+/*GstAudioChannelPosition CHANNEL_POSITIONS[CHANNELS] = {
+        GST_AUDIO_CHANNEL_POSITION_FRONT_LEFT,
+        GST_AUDIO_CHANNEL_POSITION_FRONT_RIGHT,
+        GST_AUDIO_CHANNEL_POSITION_REAR_LEFT,
+        GST_AUDIO_CHANNEL_POSITION_REAR_RIGHT,
+        GST_AUDIO_CHANNEL_POSITION_FRONT_CENTER,
+        GST_AUDIO_CHANNEL_POSITION_LFE,
+        GST_AUDIO_CHANNEL_POSITION_SIDE_LEFT,
+        GST_AUDIO_CHANNEL_POSITION_SIDE_RIGHT,
+	GST_AUDIO_CHANNEL_POSITION_TOP_FRONT_LEFT,
+	GST_AUDIO_CHANNEL_POSITION_TOP_FRONT_RIGHT,
+	GST_AUDIO_CHANNEL_POSITION_TOP_FRONT_CENTER,
+	GST_AUDIO_CHANNEL_POSITION_TOP_CENTER,
+	GST_AUDIO_CHANNEL_POSITION_TOP_REAR_LEFT,
+	GST_AUDIO_CHANNEL_POSITION_TOP_REAR_RIGHT,
+	GST_AUDIO_CHANNEL_POSITION_TOP_SIDE_LEFT,
+	GST_AUDIO_CHANNEL_POSITION_TOP_SIDE_RIGHT
+};
+*/
+#define FILE "test.ogg"
 
 GstElement *irc;
+
+
 
 void error(int num, const char *msg, const char *path)
 {
@@ -34,7 +59,7 @@ main (gint   argc,
     *videorate,
     *videoscale,
     *scalecap,
-    *flt, *ffmpegconv, *oggmux, *shout, 
+    *flt, *ffmpegconv, *oggmux, *out, 
     *theoraenc, *vidqueue,
     *audiosource, *audiorate, *audioflt, *audioconv, *audioenc, *audioqueue
     ;
@@ -71,8 +96,11 @@ main (gint   argc,
   
   //multiplexing and sending bit
   oggmux = gst_element_factory_make ("oggmux", "mux");
-  shout = gst_element_factory_make ("shout2send", "shout");
-  
+#ifdef FILE
+  out = gst_element_factory_make ("filesink", "filesink");
+#else
+  out = gst_element_factory_make ("shout2send", "shout");
+#endif
   //configure
 
   g_object_set(G_OBJECT (audiosource),
@@ -83,9 +111,9 @@ main (gint   argc,
   g_object_set (G_OBJECT (xsrc),
 		"use-damage", FALSE,
                 "startx", 1,
-                "starty", 1,
+                "starty", 31,
 		"endx", 600,
-		"endy", 480,
+		"endy", 510,
 		NULL);
 
   g_object_set (G_OBJECT (xcap), "caps",
@@ -106,21 +134,47 @@ main (gint   argc,
 				     "height", G_TYPE_INT, 480,
 				     NULL), NULL);
 
+  /*
+  GValue val;
+  memset(&val, 0, sizeof(val));
+  
+  GValueArray *arr; // for channel position layout
+  arr = g_value_array_new(CHANNELS);
+  
+  g_value_init(&val, GST_TYPE_AUDIO_CHANNEL_POSITION);
+  
+  for (int i = 0; i < CHANNELS; i++) {
+    g_value_set_enum(&val, GST_AUDIO_CHANNEL_POSITION_NONE);
+    g_value_array_append(arr, &val);
+    g_value_reset(&val);
+  }
+
+  g_value_unset(&val);
+
+  */
+
   g_object_set (G_OBJECT (audioflt), "caps",
   		gst_caps_new_simple ("audio/x-raw-float",
 				     "rate", G_TYPE_INT, 44100,
-				     "channels", G_TYPE_INT, 2,
+				     "channels", G_TYPE_INT, CHANNELS,
 				     "depth", G_TYPE_INT, 16,
+				     //"channel-positions", arr,
 				     NULL), NULL);
-  g_object_set (G_OBJECT (shout),
-		"ip", "178.77.72.138",
+#ifdef FILE
+  g_object_set (G_OBJECT (out),
+		"location", FILE,
+		NULL);
+#else
+  g_object_set (G_OBJECT (out),
+		"ip", "lurk.org",
 		"password", "xxx",
 		"mount", "/lurk.ogg",
 		NULL);
-  g_object_set (G_OBJECT (audioenc),
-		"quality", 0.9,
-		NULL);
+#endif
 
+  g_object_set (G_OBJECT (audioenc),
+		"quality", 0.3,
+		NULL);
 
   // add and link together
   gst_bin_add_many (GST_BIN (pipeline), 
@@ -131,8 +185,9 @@ main (gint   argc,
 		    scalecap,
 		    irc,
 		    ffmpegconv, flt, theoraenc, 
-		    vidqueue, oggmux, shout, 
-		    audiosource, audiorate, audioflt, audioconv, audioenc, audioqueue,
+		    vidqueue, oggmux, out, 
+		    audiosource, audiorate, audioflt, audioconv, audioenc, 
+		    audioqueue,
 		    NULL);
   gst_element_link_many (
 			 xsrc, 
@@ -143,7 +198,7 @@ main (gint   argc,
                          //videoscale,
                          //flt,
                          theoraenc, 
-			 vidqueue, oggmux, shout, 
+			 vidqueue, oggmux, out, 
 			 NULL);
    
   gst_element_link_many (audiosource, audiorate, audioflt, audioconv, audioenc, 

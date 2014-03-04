@@ -1,12 +1,12 @@
 
 #include <string.h> /* for memset () */
 #include <gst/gst.h>
-#include <gst/audio/multichannel.h>
-#include <gst/audio/audio-enumtypes.h>
+//#include <gst/audio/multichannel.h>
+//#include <gst/audio/audio-enumtypes.h>
 #include "lo/lo.h"
 #include <stdio.h>
 
-#define CHANNELS 8
+#define CHANNELS 4
 /*GstAudioChannelPosition CHANNEL_POSITIONS[CHANNELS] = {
         GST_AUDIO_CHANNEL_POSITION_FRONT_LEFT,
         GST_AUDIO_CHANNEL_POSITION_FRONT_RIGHT,
@@ -26,7 +26,7 @@
 	GST_AUDIO_CHANNEL_POSITION_TOP_SIDE_RIGHT
 };
 */
-#define FILE "test.ogg"
+//#define FILE "test.ogg"
 
 GstElement *irc;
 
@@ -57,7 +57,7 @@ main (gint   argc,
     *xsrc,
     *xcap,
     *videorate,
-    *videoscale,
+    //*videoscale,
     *scalecap,
     *flt, *ffmpegconv, *oggmux, *out, 
     *theoraenc, *vidqueue,
@@ -77,7 +77,7 @@ main (gint   argc,
   videorate = gst_element_factory_make ("videorate", "videorate");
   
 
-  videoscale = gst_element_factory_make ("videoscale", "videoscale");
+  //videoscale = gst_element_factory_make ("videoscale", "videoscale");
   irc = gst_element_factory_make ("textoverlay", "irc");
   scalecap = gst_element_factory_make ("capsfilter", "scalecap");
 
@@ -112,7 +112,7 @@ main (gint   argc,
 		"use-damage", FALSE,
                 "startx", 1,
                 "starty", 31,
-		"endx", 600,
+		"endx", 640,
 		"endy", 510,
 		NULL);
 
@@ -124,13 +124,13 @@ main (gint   argc,
   g_object_set (G_OBJECT (flt), "caps",
   		gst_caps_new_simple ("video/x-raw-yuv",
 				     "framerate", GST_TYPE_FRACTION, 8, 1,
-				     "width", G_TYPE_INT, 600,
+				     "width", G_TYPE_INT, 640,
 				     "height", G_TYPE_INT, 480,
 				     NULL), NULL);
   
   g_object_set (G_OBJECT (scalecap), "caps",
   		gst_caps_new_simple ("video/x-raw-yuv",
-				     "width", G_TYPE_INT, 600,
+				     "width", G_TYPE_INT, 640,
 				     "height", G_TYPE_INT, 480,
 				     NULL), NULL);
 
@@ -165,12 +165,17 @@ main (gint   argc,
 		"location", FILE,
 		NULL);
 #else
+  printf("sending..\n");
   g_object_set (G_OBJECT (out),
 		"ip", "lurk.org",
-		"password", "xxx",
+		"password", "***",
 		"mount", "/lurk.ogg",
 		NULL);
 #endif
+
+  g_object_set (G_OBJECT (theoraenc),
+		"quality", 30,
+		NULL);
 
   g_object_set (G_OBJECT (audioenc),
 		"quality", 0.3,
@@ -181,10 +186,12 @@ main (gint   argc,
 		    xsrc, 
                     xcap,
                     videorate,
-		    videoscale,
+		    //videoscale,
 		    scalecap,
 		    irc,
-		    ffmpegconv, flt, theoraenc, 
+		    ffmpegconv, 
+                    //flt, 
+                    theoraenc, 
 		    vidqueue, oggmux, out, 
 		    audiosource, audiorate, audioflt, audioconv, audioenc, 
 		    audioqueue,
